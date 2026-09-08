@@ -1,7 +1,19 @@
+-- ============================================================
+-- Ten Hub (Blox Fruits) - BAN HOAN THIEN
+-- Cac loi da sua: hoi sinh Auto Sea 3 + Auto Farm Swan (sai ten bien),
+-- NoClip thieu Elite/Swan, God's Guard sai level, ToggleF lech default,
+-- Startup: het ket cho-team vinh vien, hook an toan, Fluent thu lai 3 lan,
+-- Nut Titles/JobId sai chinh ta, World2->Sea2, tach 4 cap toggle trung ID,
+-- Rejoin tao connection moi moi frame, xoa code trung & loop thua.
+-- ============================================================
+
+-- (Hoan thien) Doi game tai xong moi chay, tranh ket khi game chua load kip
+if not game:IsLoaded() then game.Loaded:Wait() end
+
 _G.FastAttack = true
 
 if _G.FastAttack then
-    local _ENV = (getgenv or getrenv or getfenv)()
+    local _ENV = (getgenv or getrenv or getfenv or function() return _G end)()
 
     local function SafeWaitForChild(parent, childName)
         local success, result = pcall(function()
@@ -31,7 +43,7 @@ if _G.FastAttack then
     local Player = Players.LocalPlayer
 
     if not Player then
-        warn("KhĂƒÂƒĂ‚Â´ng tĂƒÂƒĂ‚Â¬m thĂƒÂ¡Ă‚ÂºĂ‚Â¥y ngĂƒÂ†Ă‚Â°ĂƒÂ¡Ă‚Â»Ă‚Âi chĂƒÂ†Ă‚Â¡i cĂƒÂ¡Ă‚Â»Ă‚Â¥c bĂƒÂ¡Ă‚Â»Ă‚Â™.")
+        warn("Khong tim thay nguoi choi.")
         return
     end
 
@@ -142,38 +154,78 @@ if _G.FastAttack then
 end
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
+repeat task.wait() until Players.LocalPlayer
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
+local _env = _G
+pcall(function() if getgenv then _env = getgenv() end end)
 
-if getgenv().Team == "Marines" then
-    ReplicatedStorage.Remotes.CommF_:InvokeServer("SetTeam", "Marines")
-elseif getgenv().Team == "Pirates" then
-    ReplicatedStorage.Remotes.CommF_:InvokeServer("SetTeam", "Pirates")
+-- (Hoan thien) Tu chon team neu nguoi dung co dat _env.Team truoc khi chay
+if _env.Team == "Marines" then
+    pcall(function() ReplicatedStorage.Remotes.CommF_:InvokeServer("SetTeam", "Marines") end)
+elseif _env.Team == "Pirates" then
+    pcall(function() ReplicatedStorage.Remotes.CommF_:InvokeServer("SetTeam", "Pirates") end)
 end
 
-repeat
-    task.wait(1)
-    local chooseTeam = playerGui:FindFirstChild("ChooseTeam", true)
-    local uiController = playerGui:FindFirstChild("UIController", true)
-
-    if chooseTeam and chooseTeam.Visible and uiController then
-        for _, v in pairs(getgc(true)) do
-            if type(v) == "function" and getfenv(v).script == uiController then
-                local constant = getconstants(v)
-                pcall(function()
-                    if (constant[1] == "Pirates" or constant[1] == "Marines") and #constant == 1 then
-                        if constant[1] == getgenv().Team then
-                            v(getgenv().Team)
+-- (Hoan thien) Cho co team toi da 20 giay, het gio van hien menu (khong ket vinh vien nua)
+do
+    local waited = 0
+    while not player.Team and waited < 20 do
+        task.wait(1)
+        waited = waited + 1
+        pcall(function()
+            if not _env.Team then return end
+            if not (getgc and getfenv and getconstants) then return end
+            local chooseTeam = playerGui:FindFirstChild("ChooseTeam", true)
+            local uiController = playerGui:FindFirstChild("UIController", true)
+            if chooseTeam and chooseTeam.Visible and uiController then
+                for _, v in pairs(getgc(true)) do
+                    if type(v) == "function" then
+                        local fenv = getfenv(v)
+                        if fenv and fenv.script == uiController then
+                            local constant = getconstants(v)
+                            if constant and (constant[1] == "Pirates" or constant[1] == "Marines") and #constant == 1 then
+                                if constant[1] == _env.Team then
+                                    v(_env.Team)
+                                end
+                            end
                         end
                     end
-                end)
+                end
             end
-        end
+        end)
     end
-until player.Team
-hookfunction(require(game:GetService("ReplicatedStorage").Effect.Container.Death), function() end)
-hookfunction(require(game:GetService("ReplicatedStorage").Effect.Container.Respawn), function() end)
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+end
+-- (Hoan thien) Tat hieu ung chet/hoi sinh: tu bo qua neu app khong ho tro
+if hookfunction then
+    pcall(function() hookfunction(require(game:GetService("ReplicatedStorage").Effect.Container.Death), function() end) end)
+    pcall(function() hookfunction(require(game:GetService("ReplicatedStorage").Effect.Container.Respawn), function() end) end)
+end
+-- (Hoan thien) Tai giao dien Fluent: thu lai 3 lan, neu mang hong se bao ro ly do
+local Fluent = nil
+do
+    local url = "https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"
+    for attempt = 1, 3 do
+        if Fluent then break end
+        pcall(function()
+            local code = game:HttpGet(url)
+            if code and #code > 5000 and not code:find("<!DOCTYPE", 1, true) and not code:find("<html", 1, true) then
+                Fluent = loadstring(code)()
+            end
+        end)
+        if not Fluent and attempt < 3 then task.wait(2) end
+    end
+end
+if not Fluent then
+    pcall(function()
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Ten Hub",
+            Text = "Khong tai duoc menu (loi mang). Hay kiem tra mang/VPN roi chay lai.",
+            Duration = 10
+        })
+    end)
+    error("Ten Hub: khong tai duoc thu vien Fluent sau 3 lan thu. Hay kiem tra mang roi chay lai script.")
+end
 Window = Fluent:CreateWindow({
     Title = "Ten Hub",
     SubTitle="Blox Fruits", 
@@ -211,17 +263,7 @@ game:GetService("Players").LocalPlayer.Idled:connect(function()
     wait()
     game:GetService("VirtualUser"):Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
 end)
-Sea1=false
-Sea2=false
-Sea3=false
-local placeId = game.PlaceId
-if placeId==2753915549 then
-Sea1=true
-elseif placeId==4442272183 then
-Sea2=true
-elseif placeId==7449423635 then
-Sea3=true
-end
+-- (Hoan thien: da xoa khoi xac dinh Sea trung lap, logic nam ngay phia tren)
 function CheckLevel()
 local Lv = game:GetService("Players").LocalPlayer.Data.Level.Value
 if Sea1 then
@@ -371,7 +413,7 @@ CFrameMon=CFrame.new(61738.3984375, 64.207321166992, 1433.8375244141)
 if _G.AutoLevel and (CFrameMon.Position-game.Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude>3000 then
 game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("requestEntrance",Vector3.new(61163.8515625, 11.6796875, 1819.7841796875))
 end
-elseif Lv==10 or Lv<=474 or SelectMonster=="God's Guard" then 
+elseif Lv==450 or Lv<=474 or SelectMonster=="God's Guard" then 
 Ms="God's Guard"
 NameQuest="SkyExp1Quest"
 QuestLv=1
@@ -2110,7 +2152,7 @@ function EquipTool(ToolSe)
    spawn(function()
             while task.wait() do
                 pcall(function()
-                    if _G.AutoEvoRace or _G.CastleRaid or _G.CollectAzure or _G.TweenToKitsune or _G.GhostShip or _G.Ship or _G.Auto_Holy_Torch or _G.TeleportPly or _G.Auto_Sea3 or _G.Auto_Sea2 or _G.Tweenfruit or _G.AutoFishCrew or _G.Auto_Saber or _G.AutoShark or _G.Auto_Warden or _G.Auto_RainbowHaki or AutoFarmRace or _G.AutoQuestRace or Auto_Law or AutoTushita or _G.AutoHolyTorch or _G.AutoTerrorshark or _G.farmpiranya or _G.Auto_MusketeerHat or _G.Auto_ObservationV2 or _G.AutoNear or _G.Auto_PoleV1 or _G.Auto_Buddy or _G.Ectoplasm or AutoEvoRace or AutoBartilo or _G.Auto_Canvander or _G.AutoLevel or _G.Auto_DualKatana or Auto_Quest_Yama_3 or Auto_Quest_Yama_2 or Auto_Quest_Yama_1 or Auto_Quest_Tushita_1 or Auto_Quest_Tushita_2 or Auto_Quest_Tushita_3  or _G.Clip2 or _G.Auto_Regoku or _G.AutoBone or _G.AutoBoneNoQuest or _G.AutoBoss or AutoFarmMasDevilFruit or AutoFarmMasGun or AutoHallowSycthe or AutoTushita or _G.Cake or _G.Auto_SkullGuitar or _G.AutoFarmSwan or _G.AutoEliteor or AutoNextIsland or Musketeer or _G.AutoMaterial or AutoFarmRaceQuest or _G.Factory or _G.Auto_Saw or _G.AutoFrozenDimension or _G.AutoKillTrial or _G.AutoUpgrade or _G.TweenToFrozenDimension then
+                    if _G.AutoEvoRace or _G.CastleRaid or _G.CollectAzure or _G.TweenToKitsune or _G.GhostShip or _G.Ship or _G.Auto_Holy_Torch or _G.TeleportPly or _G.Auto_Sea3 or _G.Auto_Sea2 or _G.Tweenfruit or _G.AutoFishCrew or _G.Auto_Saber or _G.AutoShark or _G.Auto_Warden or _G.Auto_RainbowHaki or AutoFarmRace or _G.AutoQuestRace or Auto_Law or AutoTushita or _G.AutoHolyTorch or _G.AutoTerrorshark or _G.farmpiranya or _G.Auto_MusketeerHat or _G.Auto_ObservationV2 or _G.AutoNear or _G.Auto_PoleV1 or _G.Auto_Buddy or _G.Ectoplasm or AutoEvoRace or AutoBartilo or _G.Auto_Canvander or _G.AutoLevel or _G.Auto_DualKatana or Auto_Quest_Yama_3 or Auto_Quest_Yama_2 or Auto_Quest_Yama_1 or Auto_Quest_Tushita_1 or Auto_Quest_Tushita_2 or Auto_Quest_Tushita_3  or _G.Clip2 or _G.Auto_Regoku or _G.AutoBone or _G.AutoBoneNoQuest or _G.AutoBoss or AutoFarmMasDevilFruit or AutoFarmMasGun or AutoHallowSycthe or AutoTushita or _G.Cake or _G.Auto_SkullGuitar or _G.Auto_FarmSwan or _G.AutoElite or AutoNextIsland or Musketeer or _G.AutoMaterial or AutoFarmRaceQuest or _G.Factory or _G.Auto_Saw or _G.AutoFrozenDimension or _G.AutoKillTrial or _G.AutoUpgrade or _G.TweenToFrozenDimension then
                         if not game:GetService("Players").LocalPlayer.Character.HumanoidRootPart:FindFirstChild("BodyClip") then
                             local Noclip = Instance.new("BodyVelocity")
                             Noclip.Name="BodyClip"
@@ -2127,7 +2169,7 @@ function EquipTool(ToolSe)
 spawn(function()
   pcall(function()
     game:GetService("RunService").Stepped:Connect(function()
-      if _G.AutoEvoRace or _G.Auto_RainbowHaki or _G.Auto_SkullGuitar or _G.CastleRaid or _G.CollectAzure or _G.TweenToKitsune or _G.Auto_Sea3 or _G.Auto_Sea2 or _G.GhostShip or _G.Ship or _G.Auto_Holy_Torch or _G.TeleportPly or _G.Tweenfruit or _G.Auto_Saber or _G.Auto_PoleV1 or _G.Auto_MusketeerHat or _G.AutoFishCrew or _G.AutoShark or AutoFarmRace or _G.AutoQuestRace or _G.Auto_Warden or Auto_Law or _G.Auto_DualKatana or Auto_Quest_Tushita_1 or Auto_Quest_Tushita_2 or Auto_Quest_Tushita_3 or AutoTushita or _G.AutoHolyTorch or _G.Auto_Buddy or _G.AutoTerrorshark or _G.farmpiranya or Auto_Quest_Yama_3 or _G.Auto_ObservationV2 or Auto_Quest_Yama_2 or Auto_Quest_Yama_1 or _G.AutoNear or _G.Ectoplasm or AutoEvoRace or _G.AutoKillTrial or AutoBartilo or AutoFarmMasGun or _G.Auto_Regoku or _G.AutoLevel or _G.Clip2 or _G.AutoBone or _G.Auto_Canvander or _G.AutoBoneNoQuest or _G.AutoBoss or _G.Auto_Saw or AutoFarmMasDevilFruit or AutoHallowSycthe or AutoTushita or _G.Cake or _G.AutoFarmSwan or _G.AutoEliteor or AutoNextIsland or Musketeer or _G.AutoMaterial or _G.Factory or _G.AutoFrozenDimension or AutoFarmRaceQuest or _G.AutoUpgrade or _G.TweenToFrozenDimension then
+      if _G.AutoEvoRace or _G.Auto_RainbowHaki or _G.Auto_SkullGuitar or _G.CastleRaid or _G.CollectAzure or _G.TweenToKitsune or _G.Auto_Sea3 or _G.Auto_Sea2 or _G.GhostShip or _G.Ship or _G.Auto_Holy_Torch or _G.TeleportPly or _G.Tweenfruit or _G.Auto_Saber or _G.Auto_PoleV1 or _G.Auto_MusketeerHat or _G.AutoFishCrew or _G.AutoShark or AutoFarmRace or _G.AutoQuestRace or _G.Auto_Warden or Auto_Law or _G.Auto_DualKatana or Auto_Quest_Tushita_1 or Auto_Quest_Tushita_2 or Auto_Quest_Tushita_3 or AutoTushita or _G.AutoHolyTorch or _G.Auto_Buddy or _G.AutoTerrorshark or _G.farmpiranya or Auto_Quest_Yama_3 or _G.Auto_ObservationV2 or Auto_Quest_Yama_2 or Auto_Quest_Yama_1 or _G.AutoNear or _G.Ectoplasm or AutoEvoRace or _G.AutoKillTrial or AutoBartilo or AutoFarmMasGun or _G.Auto_Regoku or _G.AutoLevel or _G.Clip2 or _G.AutoBone or _G.Auto_Canvander or _G.AutoBoneNoQuest or _G.AutoBoss or _G.Auto_Saw or AutoFarmMasDevilFruit or AutoHallowSycthe or AutoTushita or _G.Cake or _G.Auto_FarmSwan or _G.AutoElite or AutoNextIsland or Musketeer or _G.AutoMaterial or _G.Factory or _G.AutoFrozenDimension or AutoFarmRaceQuest or _G.AutoUpgrade or _G.TweenToFrozenDimension then
       for i,v in pairs(game:GetService("Players").LocalPlayer.Character:GetDescendants()) do
       if v:IsA("BasePart") then
       v.CanCollide=false
@@ -2239,18 +2281,7 @@ function AttackNoCoolDown()
     end
 end
 Type=1
-spawn(function()
-    while wait() do
-        if Type==1 then
-            Pos=CFrame.new(0, 20, 0)
-        end
-    end
-end)
-spawn(function()
-    while wait() do
-        Type=1
-    end
-end)
+Pos=CFrame.new(0, 20, 0)
   function AutoHaki()
     if not game:GetService("Players").LocalPlayer.Character:FindFirstChild("HasBuso") then
         game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Buso")
@@ -6108,7 +6139,7 @@ Options.ToggleAutoFarmSwan:SetValue(false)
 spawn(function()
     pcall(function()
         while wait() do
-            if _G.AutoFarmSwan then
+            if _G.Auto_FarmSwan then
                 if game:GetService("Workspace").Enemies:FindFirstChild("Don Swan") then
                     for i, v in pairs(game:GetService("Workspace").Enemies:GetChildren()) do
                         if v.Name=="Don Swan" and v.Humanoid.Health>0 and v:IsA("Model") and v:FindFirstChild("Humanoid") and v:FindFirstChild("HumanoidRootPart") then
@@ -6122,14 +6153,14 @@ spawn(function()
                                     Tween(v.HumanoidRootPart.CFrame*Pos)
                                     AttackNoCoolDown()
                                 end)
-                            until _G.AutoFarmSwan==false or v.Humanoid.Health<=0
+                            until _G.Auto_FarmSwan==false or v.Humanoid.Health<=0
                         end
                     end
                 else
                     repeat
                         task.wait()
                         game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("requestEntrance", Vector3.new(2284.912109375, 15.537666320801, 905.48291015625))
-                    until (CFrame.new(2284.912109375, 15.537666320801, 905.48291015625).Position-game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.Position).Magnitude<=4 or _G.AutoFarmSwan==false
+                    until (CFrame.new(2284.912109375, 15.537666320801, 905.48291015625).Position-game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.Position).Magnitude<=4 or _G.Auto_FarmSwan==false
                 end
             end
         end
@@ -6482,10 +6513,10 @@ local ToggleF = Tabs.Setting:AddToggle("ToggleF", {Title="Skill F",Description="
 ToggleF:OnChanged(function(Value)
    SkillF=Value
     end)
-Options.ToggleF:SetValue(true)
+Options.ToggleF:SetValue(false)
 local Usser = Tabs.Info:AddParagraph({
     Title="Status",
-    Content="â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n"..
+    Content="====================\n"..
         "Name : "..game.Players.LocalPlayer.DisplayName.." (@"..game.Players.LocalPlayer.Name..")\n"..
         "Levels : "..game:GetService("Players").LocalPlayer.Data.Level.Value.."\n"..
         "Money : "..game:GetService("Players").LocalPlayer.Data.Beli.Value.."\n"..
@@ -6495,7 +6526,7 @@ local Usser = Tabs.Info:AddParagraph({
         "Energy : "..game.Players.LocalPlayer.Character.Energy.Value.."/"..game.Players.LocalPlayer.Character.Energy.MaxValue.."\n"..
         "Race : "..game:GetService("Players").LocalPlayer.Data.Race.Value.."\n"..
         "Devil Fruit : "..game:GetService("Players").LocalPlayer.Data.DevilFruit.Value.."\n"..
-        "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”"
+        "===================="
 })
 local Time = Tabs.Status:AddParagraph({
     Title="Time",
@@ -6571,7 +6602,7 @@ local Input = Tabs.Status:AddInput("Input", {
         Title="Join Job ID",
         Description="",
         Callback=function()
-            game:GetService("TeleportService"):TeleportToPlaceInstance(game.placeId,_G.Job, game.Players.LocalPlayer)
+            game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId,_G.Job, game.Players.LocalPlayer)
         end
     })
     Tabs.Status:AddButton({
@@ -6588,7 +6619,7 @@ local Input = Tabs.Status:AddInput("Input", {
         spawn(function()
 while wait() do
 if _G.Join then
-game:GetService("TeleportService"):TeleportToPlaceInstance(game.placeId,_G.Job, game.Players.LocalPlayer)
+game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId,_G.Job, game.Players.LocalPlayer)
 end
 end
 end)
@@ -6906,9 +6937,9 @@ end)
 Options.ToggleAutoSea3:SetValue(false)
 spawn(function()
     while wait() do
-        if _G.AutoSea3 then
+        if _G.Auto_Sea3 then
             pcall(function()
-                if game:GetService("Players").LocalPlayer.Data.Level.Value>=1500 and World2 then
+                if game:GetService("Players").LocalPlayer.Data.Level.Value>=1500 and Sea2 then
                     _G.AutoLevel=false
                     if game:GetService("ReplicatedStorage").Remotes["CommF_"]:InvokeServer("ZQuestProgress", "General")==0 then
                         Tween(CFrame.new(-1926.3221435547, 12.819851875305, 1738.3092041016))
@@ -6932,7 +6963,7 @@ spawn(function()
                                         v.Humanoid.WalkSpeed=0
                                         AttackNoCoolDown()
                                         game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("TravelZou")
-                                    until _G.AutoSea3==false or v.Humanoid.Health<=0 or not v.Parent
+                                    until _G.Auto_Sea3==false or v.Humanoid.Health<=0 or not v.Parent
                                 end
                             end
                         elseif not game:GetService("Workspace").Enemies:FindFirstChild("rip_indra") and (CFrame.new(-26880.93359375, 22.848554611206, 473.18951416016).Position-game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.Position).Magnitude<=1000 then
@@ -7251,12 +7282,12 @@ DropdownFruit:SetValue(_G.SelectFruit)
 DropdownFruit:OnChanged(function(Value)
     _G.SelectFruit=Value
 end)
-local ToggleFruit = Tabs.Fruit:AddToggle("ToggleFruit", {
+local ToggleBuyFruit = Tabs.Fruit:AddToggle("ToggleBuyFruit", {
     Title="Buy Fruit",
     Description="",
     Default=false 
 })
-ToggleFruit:OnChanged(function(Value)
+ToggleBuyFruit:OnChanged(function(Value)
     if Value then
         _G.AutoBuyFruitSniper=true
         pcall(function()
@@ -7266,7 +7297,7 @@ ToggleFruit:OnChanged(function(Value)
         _G.AutoBuyFruitSniper=false
     end
 end)
-Options.ToggleFruit:SetValue(false)
+Options.ToggleBuyFruit:SetValue(false)
 local DropdownPermanentFruit = Tabs.Fruit:AddDropdown("DropdownPermanentFruit", {
     Title="Buy Permanent Fruit",
     Description="",
@@ -8623,7 +8654,7 @@ Tabs.Misc:AddButton({
             [1]="getTitles"
         }
         game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer(unpack(args))
-        game.Players.localPlayer.PlayerGui.Main.Titles.Visible=true
+        game.Players.LocalPlayer.PlayerGui.Main.Titles.Visible=true
     end
 })
 local Mastery = Tabs.Misc:AddSection("Awakening")  
@@ -8640,17 +8671,13 @@ ToggleRejoin:OnChanged(function(Value)
     _G.AutoRejoin=Value
 end)
 Options.ToggleRejoin:SetValue(true)
-spawn(function()
-    while wait() do
-        if _G.AutoRejoin then
-                getgenv().rejoin=game:GetService("CoreGui").RobloxPromptGui.promptOverlay.ChildAdded:Connect(function(child)
-                    if child.Name=='ErrorPrompt' and child:FindFirstChild('MessageArea') and child.MessageArea:FindFirstChild("ErrorFrame") then
-                        game:GetService("TeleportService"):Teleport(game.PlaceId)
-                    end
-                 end)
-            end
-        end
-    end)
+-- (Hoan thien: chi ket noi 1 lan duy nhat, ban cu tao connection moi moi frame gay lag khi treo lau)
+if getgenv().rejoin then pcall(function() getgenv().rejoin:Disconnect() end) end
+getgenv().rejoin=game:GetService("CoreGui").RobloxPromptGui.promptOverlay.ChildAdded:Connect(function(child)
+    if _G.AutoRejoin and child.Name=='ErrorPrompt' and child:FindFirstChild('MessageArea') and child.MessageArea:FindFirstChild("ErrorFrame") then
+        game:GetService("TeleportService"):Teleport(game.PlaceId)
+    end
+end)
 local Mastery = Tabs.Misc:AddSection("No Fog")
 local function NoFog()
     local lighting = game:GetService("Lighting")
@@ -9105,28 +9132,28 @@ local ToggleDefendVolcano = Tabs.Sea:AddToggle("ToggleDefendVolcano", {
 ToggleDefendVolcano:OnChanged(function(Value)
     _G.AutoDefendVolcano = Value
 end)
-local ToggleMelee = Tabs.Sea:AddToggle("ToggleMelee", {
+local ToggleUseMelee = Tabs.Sea:AddToggle("ToggleUseMelee", {
     Title = "Use Melee", 
     Description = "", 
     Default = false
 })
-ToggleMelee:OnChanged(function(Value)
+ToggleUseMelee:OnChanged(function(Value)
     _G.UseMelee = Value
 end)
-local ToggleSword = Tabs.Sea:AddToggle("ToggleSword", {
+local ToggleUseSword = Tabs.Sea:AddToggle("ToggleUseSword", {
     Title = "Use Sword", 
     Description = "", 
     Default = false
 })
-ToggleSword:OnChanged(function(Value)
+ToggleUseSword:OnChanged(function(Value)
     _G.UseSword = Value
 end)
-local ToggleGun = Tabs.Sea:AddToggle("ToggleGun", {
+local ToggleUseGun = Tabs.Sea:AddToggle("ToggleUseGun", {
     Title = "Use Gun", 
     Description = "", 
     Default = false
 })
-ToggleGun:OnChanged(function(Value)
+ToggleUseGun:OnChanged(function(Value)
     _G.UseGun = Value
 end)
 local function useSkill(skillKey)
