@@ -4,6 +4,7 @@
 -- NoClip thieu Elite/Swan, God's Guard sai level, ToggleF lech default,
 -- Startup: het ket cho-team vinh vien, hook an toan, Fluent thu lai 3 lan,
 -- Nut Titles/JobId sai chinh ta, World2->Sea2, tach 4 cap toggle trung ID,
+-- Bo Shutdown da game, Admin-hop co nut tat, giam spam cong diem,
 -- Rejoin tao connection moi moi frame, xoa code trung & loop thua.
 -- ============================================================
 
@@ -257,7 +258,8 @@ Main1=Window:AddTab({ Title="Tab Fram Other" }),
 }
 local Options = Fluent.Options
 local id = game.PlaceId
-if id==2753915549 then Sea1=true; elseif id==4442272183 then Sea2=true; elseif id==7449423635 then Sea3=true; else game:Shutdown() end;
+if id==2753915549 then Sea1=true; elseif id==4442272183 then Sea2=true; elseif id==7449423635 then Sea3=true;
+else pcall(function() game:GetService("StarterGui"):SetCore("SendNotification",{Title="Ten Hub",Text="Script chi chay trong Blox Fruits (Sea 1/2/3).",Duration=8}) end); error("Ten Hub: dung script, game nay khong phai Blox Fruits.") end;
 game:GetService("Players").LocalPlayer.Idled:connect(function()
     game:GetService("VirtualUser"):Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
     wait()
@@ -6649,7 +6651,7 @@ ToggleFruit:OnChanged(function(Value)
     end)
 Options.ToggleFruit:SetValue(false)
 spawn(function()
-    while wait() do
+    while task.wait(0.25) do
         if _G.Auto_Stats_Devil_Fruit then
             local args = {
                 [1]="AddPoint",
@@ -6661,7 +6663,7 @@ spawn(function()
     end
 end)
 spawn(function()
-    while wait() do
+    while task.wait(0.25) do
         if _G.Auto_Stats_Gun then
             local args = {
                 [1]="AddPoint",
@@ -6673,7 +6675,7 @@ spawn(function()
     end
 end)
 spawn(function()
-    while wait() do
+    while task.wait(0.25) do
         if _G.Auto_Stats_Sword then
             local args = {
                 [1]="AddPoint",
@@ -6685,7 +6687,7 @@ spawn(function()
     end
 end)
 spawn(function()
-    while wait() do
+    while task.wait(0.25) do
         if _G.Auto_Stats_Defense then
             local args = {
                 [1]="AddPoint",
@@ -6697,7 +6699,7 @@ spawn(function()
     end
 end)
 spawn(function()
-    while wait() do
+    while task.wait(0.25) do
         if _G.Auto_Stats_Melee then
             local args = {
                 [1]="AddPoint",
@@ -9340,13 +9342,23 @@ local targetPlayers = {
     ["layandikit12"] = true,
     ["Hingoi"] = true
 }
+local ToggleAntiStaff = Tabs.Misc:AddToggle("ToggleAntiStaff", {Title="Tu doi server khi gap Admin", Description="", Default=true})
+ToggleAntiStaff:OnChanged(function(Value)
+    _G.AntiStaffHop=Value
+end)
+Options.ToggleAntiStaff:SetValue(true)
+if _G.AntiStaffHop == nil then _G.AntiStaffHop = true end
 spawn(function()
     while true do
         wait(1)
-        for _, v in pairs(game.Players:GetPlayers()) do
-            if targetPlayers[v.Name] then
-                Hop()
-                break
+        if _G.AntiStaffHop then
+            for _, v in pairs(game.Players:GetPlayers()) do
+                if targetPlayers[v.Name] then
+                    pcall(function() game:GetService("StarterGui"):SetCore("SendNotification",{Title="Ten Hub",Text="Phat hien Admin ("..v.Name.."), dang doi server...",Duration=5}) end)
+                    task.wait(1)
+                    Hop()
+                    break
+                end
             end
         end
     end
