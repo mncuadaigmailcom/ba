@@ -282,4 +282,23 @@ game:IsLoaded()                                  (dòng 11)
 
 ---
 
-*Tài liệu được tạo bằng phân tích tĩnh; các khẳng định về "tính năng chết" dựa trên việc biến không bao giờ được gán giá trị trong toàn bộ file — cần xác nhận lại bằng một lần chạy thực tế với executor.*
+## 7. Phân tích vòng 2 — Ma trận 117 toggle
+
+Chi tiết trong **[`PHAN_TICH_TOGGLE.md`](./PHAN_TICH_TOGGLE.md)** (liệt kê từng toggle: dòng, biến điều khiển, trạng thái).
+
+Tóm tắt: **105/117 toggle nối đúng dây** (biến được vòng lặp bên ngoài đọc), 2 nút kiểu "bấm 1 lần",
+và phần lỗi còn lại nằm ở **phía thực thi** chứ không phải ở dây nối.
+
+| Phát hiện mới | Mức |
+|---|---|
+| **"Receive Quest" (L8841)** mở `while wait()` **không điều kiện thoát** → mỗi lần bật sinh thêm 1 vòng lặp chạy mãi, tắt toggle không dừng được, spam `RF/DragonHunter` liên tục | 🔴 P0 |
+| **2 cặp toggle dùng chung biến**: `KillAura` (Auto Trial Human/Ghoul L8043 ↔ Auto Kill Golems L9255) và `_G.AutoLevel` (Auto Fram Level L2496 ↔ Auto White Belt L9029) → bật một cái kích hoạt cả hai | 🟠 P1 |
+| **Auto Ship (L4460)** gãy do `CheckPirateBoat` bị ghi đè bởi bản FishBoat + `spawn(Tween(...), 1)` sai cú pháp | 🔴 P0 |
+| **Auto GhostShip (L4496)** chết: vòng lặp đọc `_G.bjirFishBoat`, toggle gán `_G.GhostShip` | 🔴 P0 |
+| **Auto CDK (L5669)** gãy do `GetMaterial()` nil (cùng `pos`, `Sword`, `FarmPossEsp`) | 🔴 P0 |
+| **ESP Mirage (L7646)** chết do lệch tên `IslandMirageEsp` ↔ `MirageIslandESP` | 🟠 P1 |
+| **Thiếu toggle ESP rương**: `ChestESP` không có nút nào gán dù hàm `UpdateChestChams` tồn tại | 🟡 P2 |
+
+---
+
+*Tài liệu được tạo bằng phân tích tĩnh; các khẳng định về "tính năng chết" dựa trên việc biến không bao giờ được gán/đọc giá trị trong toàn bộ file — cần xác nhận lại bằng một lần chạy thực tế với executor.*
