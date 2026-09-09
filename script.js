@@ -202,20 +202,36 @@ if hookfunction then
     pcall(function() hookfunction(require(game:GetService("ReplicatedStorage").Effect.Container.Death), function() end) end)
     pcall(function() hookfunction(require(game:GetService("ReplicatedStorage").Effect.Container.Respawn), function() end) end)
 end
--- (Hoan thien) Tai giao dien Fluent: thu lai 3 lan, neu mang hong se bao ro ly do
+-- (Hoan thien) Tai giao dien Fluent: thu lai nhieu nguon + SaveManager/InterfaceManager de UI hien dung
 local Fluent = nil
+local SaveManager = nil
+local InterfaceManager = nil
 do
-    local url = "https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"
-    for attempt = 1, 3 do
+    local urls = {
+        "https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua",
+        "https://raw.githubusercontent.com/dawid-scripts/Fluent/master/main.lua",
+        "https://raw.githubusercontent.com/dawid-scripts/Fluent/main/main.lua"
+    }
+    for _, url in ipairs(urls) do
         if Fluent then break end
-        pcall(function()
-            local code = game:HttpGet(url)
-            if code and #code > 5000 and not code:find("<!DOCTYPE", 1, true) and not code:find("<html", 1, true) then
-                Fluent = loadstring(code)()
-            end
-        end)
-        if not Fluent and attempt < 3 then task.wait(2) end
+        for attempt = 1, 2 do
+            if Fluent then break end
+            pcall(function()
+                local code = game:HttpGet(url)
+                if code and #code > 5000 and not code:find("<!DOCTYPE", 1, true) and not code:find("<html", 1, true) then
+                    Fluent = loadstring(code)()
+                end
+            end)
+            if not Fluent then task.wait(1) end
+        end
     end
+    -- Tai SaveManager / InterfaceManager (khong bat buoc, nhung giup UI on dinh hon)
+    pcall(function()
+        SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
+    end)
+    pcall(function()
+        InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
+    end)
 end
 if not Fluent then
     pcall(function()
@@ -227,43 +243,103 @@ if not Fluent then
     end)
     error("Ten Hub: khong tai duoc thu vien Fluent sau 3 lan thu. Hay kiem tra mang roi chay lai script.")
 end
+
+-- FIX: Tang kich thuoc Window, them Icon, dam bao Tab hien thi
 Window = Fluent:CreateWindow({
     Title = "Ten Hub",
-    SubTitle="Blox Fruits", 
-    TabWidth=155, 
+    SubTitle="Blox Fruits | Fix UI",
+    TabWidth=160,
     Theme="Darker",
     Acrylic=false,
-    Size=UDim2.fromOffset(555, 320), 
+    Size=UDim2.fromOffset(580, 460),
     MinimizeKey = Enum.KeyCode.LeftControl
 })
-local Tabs = {
 
-Info=Window:AddTab({ Title="Tab Info" }),
-    Main=Window:AddTab({ Title="Tab Fram" }),
+local Tabs = {}
+-- Tao tab an toan tung cai mot, co Icon de Fluent render dung
+pcall(function() Tabs.Info = Window:AddTab({ Title="Info", Icon="info" }) end)
+pcall(function() Tabs.Main = Window:AddTab({ Title="Farm", Icon="swords" }) end)
+pcall(function() Tabs.Main1 = Window:AddTab({ Title="Farm Other", Icon="package" }) end)
+pcall(function() Tabs.Sea = Window:AddTab({ Title="Sea Event", Icon="waves" }) end)
+pcall(function() Tabs.Item = Window:AddTab({ Title="Stack Farm", Icon="box" }) end)
+pcall(function() Tabs.Setting = Window:AddTab({ Title="Setting", Icon="settings" }) end)
+pcall(function() Tabs.Status = Window:AddTab({ Title="Status", Icon="activity" }) end)
+pcall(function() Tabs.Stats = Window:AddTab({ Title="Stats", Icon="bar-chart" }) end)
+pcall(function() Tabs.Player = Window:AddTab({ Title="Player", Icon="user" }) end)
+pcall(function() Tabs.Teleport = Window:AddTab({ Title="Teleport", Icon="map" }) end)
+pcall(function() Tabs.Visual = Window:AddTab({ Title="Visual", Icon="eye" }) end)
+pcall(function() Tabs.Fruit = Window:AddTab({ Title="Fruit", Icon="apple" }) end)
+pcall(function() Tabs.Raid = Window:AddTab({ Title="Raid", Icon="zap" }) end)
+pcall(function() Tabs.Race = Window:AddTab({ Title="Race", Icon="award" }) end)
+pcall(function() Tabs.Shop = Window:AddTab({ Title="Shop", Icon="shopping-cart" }) end)
+pcall(function() Tabs.Misc = Window:AddTab({ Title="Misc", Icon="more-horizontal" }) end)
 
-Main1=Window:AddTab({ Title="Tab Fram Other" }),
-    Sea=Window:AddTab({ Title="Tab Sea Event" }),
-    Item=Window:AddTab({ Title="Tab Stack Fram" }),
-    Setting=Window:AddTab({ Title="Tab Setting" }),
-    Status=Window:AddTab({ Title="Tab Status" }),
-    Stats=Window:AddTab({ Title="Tab Stats" }),
-    Player=Window:AddTab({ Title="Tab Player" }),
-    Teleport=Window:AddTab({ Title="Tab Teleport" }),
-    Visual=Window:AddTab({ Title="Tab Visual" }),
-    Fruit=Window:AddTab({ Title="Tab Fruit" }),
-    Raid=Window:AddTab({ Title="Tab Raid" }),
-    Race=Window:AddTab({ Title="Tab Race" }),
-    Shop=Window:AddTab({ Title="Tab Shop" }),
-    Misc=Window:AddTab({ Title="Tab Misc" }),
-}
+-- Fallback neu AddTab loi (executor cu)
+if not Tabs.Info then Tabs.Info=Window:AddTab({ Title="Tab Info" }) end
+if not Tabs.Main then Tabs.Main=Window:AddTab({ Title="Tab Fram" }) end
+if not Tabs.Main1 then Tabs.Main1=Window:AddTab({ Title="Tab Fram Other" }) end
+if not Tabs.Sea then Tabs.Sea=Window:AddTab({ Title="Tab Sea Event" }) end
+if not Tabs.Item then Tabs.Item=Window:AddTab({ Title="Tab Stack Fram" }) end
+if not Tabs.Setting then Tabs.Setting=Window:AddTab({ Title="Tab Setting" }) end
+if not Tabs.Status then Tabs.Status=Window:AddTab({ Title="Tab Status" }) end
+if not Tabs.Stats then Tabs.Stats=Window:AddTab({ Title="Tab Stats" }) end
+if not Tabs.Player then Tabs.Player=Window:AddTab({ Title="Tab Player" }) end
+if not Tabs.Teleport then Tabs.Teleport=Window:AddTab({ Title="Tab Teleport" }) end
+if not Tabs.Visual then Tabs.Visual=Window:AddTab({ Title="Tab Visual" }) end
+if not Tabs.Fruit then Tabs.Fruit=Window:AddTab({ Title="Tab Fruit" }) end
+if not Tabs.Raid then Tabs.Raid=Window:AddTab({ Title="Tab Raid" }) end
+if not Tabs.Race then Tabs.Race=Window:AddTab({ Title="Tab Race" }) end
+if not Tabs.Shop then Tabs.Shop=Window:AddTab({ Title="Tab Shop" }) end
+if not Tabs.Misc then Tabs.Misc=Window:AddTab({ Title="Tab Misc" }) end
+
 local Options = Fluent.Options
+
+-- FIX QUAN TRONG: Chon tab dau tien de hien noi dung, neu khong Fluent se de trang
+pcall(function()
+    Window:SelectTab(1)
+end)
+pcall(function()
+    if SaveManager then
+        SaveManager:SetLibrary(Fluent)
+        SaveManager:IgnoreThemeSettings()
+        SaveManager:SetIgnoreIndexes({})
+    end
+    if InterfaceManager then
+        InterfaceManager:SetLibrary(Fluent)
+        InterfaceManager:SetFolder("TenHub")
+        InterfaceManager:BuildInterfaceSection(Tabs.Setting)
+    end
+end)
+
+
+-- FIX: Khoi tao bien toan cuc tranh nil gay loi UI
+TypeMastery = TypeMastery or "Level"
+KillPercent = KillPercent or 25
+ChooseWeapon = ChooseWeapon or "Melee"
+SelectWeapon = SelectWeapon or nil
+SelectIsland = _G.SelectIsland or nil
+SelectChip = SelectChip or "Flame"
+SelectBoss = SelectBoss or nil
+SelectMaterial = SelectMaterial or nil
+
+
+pcall(function()
+    Fluent:Notify({
+        Title="Ten Hub",
+        Content="Menu da tai xong! Neu khong thay nut, thu bam vao cac Tab ben trai.",
+        Duration=6
+    })
+end)
 local id = game.PlaceId
 if id==2753915549 then Sea1=true; elseif id==4442272183 then Sea2=true; elseif id==7449423635 then Sea3=true;
 else pcall(function() game:GetService("StarterGui"):SetCore("SendNotification",{Title="Ten Hub",Text="Script chi chay trong Blox Fruits (Sea 1/2/3).",Duration=8}) end); error("Ten Hub: dung script, game nay khong phai Blox Fruits.") end;
-game:GetService("Players").LocalPlayer.Idled:connect(function()
-    game:GetService("VirtualUser"):Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-    wait()
-    game:GetService("VirtualUser"):Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+-- FIX: dung Connect thay vi connect (deprecated) de tranh loi tren executor moi
+pcall(function()
+    game:GetService("Players").LocalPlayer.Idled:Connect(function()
+        game:GetService("VirtualUser"):Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+        task.wait(0.1)
+        game:GetService("VirtualUser"):Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+    end)
 end)
 -- (Hoan thien: da xoa khoi xac dinh Sea trung lap, logic nam ngay phia tren)
 function CheckLevel()
@@ -2289,14 +2365,7 @@ Pos=CFrame.new(0, 20, 0)
         game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Buso")
     end
 end
-function to(P)
-    repeat wait(_G.Fast_Delay)
-        game.Players.LocalPlayer.Character.Humanoid:ChangeState(15)
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame=P
-        task.wait()
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame=P
-    until (P.Position-game.Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude<=2000
-end
+-- FIX: Xoa ham to(P) trung lap, giu lai ban hoan thien co xu ly entrance
 function to(p)
         pcall(function()
             if (p.Position-game.Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude>=2000 and not Auto_Raid and game.Players.LocalPlayer.Character.Humanoid.Health>0 then
@@ -2505,7 +2574,7 @@ end)
             wait()
         end
     end)
-    Options.ToggleLevel:SetValue(false)
+    pcall(function() Options.ToggleLevel:SetValue(false) end)
     spawn(function()
         while task.wait() do
         if _G.AutoLevel then
@@ -2563,7 +2632,7 @@ end)
             wait()
         end
     end)
-    Options.ToggleMobAura:SetValue(false)
+    pcall(function() Options.ToggleMobAura:SetValue(false) end)
     spawn(function()
         while wait() do
         if _G.AutoNear then
@@ -2603,7 +2672,7 @@ local AutoFram = Tabs.Main1:AddSection("CastleRaid")
     ToggleCastleRaid:OnChanged(function(Value)
         _G.CastleRaid=Value
     end)
-    Options.ToggleCastleRaid:SetValue(false)
+    pcall(function() Options.ToggleCastleRaid:SetValue(false) end)
     spawn(function()
         while wait() do
             if _G.CastleRaid then
@@ -2639,7 +2708,7 @@ local ToggleHakiFortress = Tabs.Main1:AddToggle("ToggleHakiFortress", {
 ToggleHakiFortress:OnChanged(function(Value)
     _G.EnableHakiFortress=Value
 end)
-Options.ToggleHakiFortress:SetValue(false)
+pcall(function() Options.ToggleHakiFortress:SetValue(false) end)
 local function EquipAuraAndTeleport(storageName, targetPosition)
     local args = {
         [1]={
@@ -2777,7 +2846,7 @@ local ToggleMasteryFruit = Tabs.Main:AddToggle("ToggleMasteryFruit", {
 ToggleMasteryFruit:OnChanged(function(Value)
     AutoFarmMasDevilFruit = Value
 end)
-Options.ToggleMasteryFruit:SetValue(false)
+pcall(function() Options.ToggleMasteryFruit:SetValue(false) end)
 local ToggleMasteryGun = Tabs.Main:AddToggle("ToggleMasteryGun", {
     Title = "Auto Fram Gun",
     Description = "",
@@ -3496,7 +3565,7 @@ ToggleBone:OnChanged(function(Value)
         wait()
     end
 end)
-Options.ToggleBone:SetValue(false)
+pcall(function() Options.ToggleBone:SetValue(false) end)
 local BoneCFrame = CFrame.new(-9515.75, 174.8521728515625, 6079.40625)
 spawn(function()
     while wait() do
@@ -3605,7 +3674,7 @@ local ToggleRandomBone = Tabs.Main:AddToggle("ToggleRandomBone", {Title="Random 
 ToggleRandomBone:OnChanged(function(Value)  
         _G.AutoRandomBone=Value
 end)
-Options.ToggleRandomBone:SetValue(false)
+pcall(function() Options.ToggleRandomBone:SetValue(false) end)
 spawn(function()
     while wait() do
     if _G.AutoRandomBone then
@@ -3654,7 +3723,7 @@ ToggleCake:OnChanged(function(Value)
         wait()
     end
 end)
-Options.ToggleCake:SetValue(false)
+pcall(function() Options.ToggleCake:SetValue(false) end)
 spawn(function()
     while wait() do
         if _G.Cake then
@@ -3775,7 +3844,7 @@ end)
     ToggleSpawnCake:OnChanged(function(Value)
       _G.SpawnCakePrince=Value
     end)
-    Options.ToggleSpawnCake:SetValue(true)
+    pcall(function() Options.ToggleSpawnCake:SetValue(true) end)
 end
 spawn(function()
   while wait() do
@@ -3801,7 +3870,7 @@ end)
     ToggleVatChatKiDi:OnChanged(function(Value)
         _G.Ectoplasm=Value
     end)
-    Options.ToggleVatChatKiDi:SetValue(false)
+    pcall(function() Options.ToggleVatChatKiDi:SetValue(false) end)
     spawn(function()
         while wait() do
             pcall(function()
@@ -3866,7 +3935,7 @@ local boss = Tabs.Main:AddSection("Fram Boss")
     ToggleAutoFarmBoss:OnChanged(function(Value)
         _G.AutoBoss=Value
     end)
-    Options.ToggleAutoFarmBoss:SetValue(false)
+    pcall(function() Options.ToggleAutoFarmBoss:SetValue(false) end)
     spawn(function()
         while wait() do
             if _G.AutoBoss then
@@ -3932,7 +4001,7 @@ local boss = Tabs.Main:AddSection("Fram Boss")
             wait()
         end
     end)
-    Options.ToggleMaterial:SetValue(false)
+    pcall(function() Options.ToggleMaterial:SetValue(false) end)
     spawn(function()
         while task.wait() do
         if _G.AutoMaterial then
@@ -3998,7 +4067,7 @@ local ToggleTPKitsune = Tabs.Sea:AddToggle("ToggleTPKitsune", {Title = "Teleport
 ToggleTPKitsune:OnChanged(function(Value)
     _G.TweenToKitsune = Value
 end)
-Options.ToggleTPKitsune:SetValue(false)
+pcall(function() Options.ToggleTPKitsune:SetValue(false) end)
 spawn(function()
     local kitsuneIsland
     while not kitsuneIsland do
@@ -4022,7 +4091,7 @@ local ToggleCollectAzure = Tabs.Sea:AddToggle("ToggleCollectAzure", {Title = "Au
 ToggleCollectAzure:OnChanged(function(Value)
     _G.CollectAzure = Value
 end)
-Options.ToggleCollectAzure:SetValue(false)
+pcall(function() Options.ToggleCollectAzure:SetValue(false) end)
 spawn(function()
     while wait() do
         if _G.CollectAzure then
@@ -4299,7 +4368,7 @@ local ToggleTerrorshark = Tabs.Sea:AddToggle("ToggleTerrorshark", {Title="Auto T
 ToggleTerrorshark:OnChanged(function(Value)
     _G.AutoTerrorshark = Value
 end)
-Options.ToggleTerrorshark:SetValue(false)
+pcall(function() Options.ToggleTerrorshark:SetValue(false) end)
 _G.IsFlying = false 
 spawn(function()
     while wait() do
@@ -4352,7 +4421,7 @@ end)
      TogglePiranha:OnChanged(function(Value)
         _G.farmpiranya=Value
      end)
-     Options.TogglePiranha:SetValue(false)
+     pcall(function() Options.TogglePiranha:SetValue(false) end)
      spawn(function()
         while wait() do
             if _G.farmpiranya then
@@ -4387,7 +4456,7 @@ end)
      ToggleShark:OnChanged(function(Value)
         _G.AutoShark=Value
      end)
-     Options.ToggleShark:SetValue(false)
+     pcall(function() Options.ToggleShark:SetValue(false) end)
      spawn(function()
         while wait() do
             if _G.AutoShark then
@@ -4424,7 +4493,7 @@ end)
     ToggleFishCrew:OnChanged(function(Value)
        _G.AutoFishCrew=Value
     end)
-    Options.ToggleFishCrew:SetValue(false)
+    pcall(function() Options.ToggleFishCrew:SetValue(false) end)
     spawn(function()
         while wait() do
             if _G.AutoFishCrew then
@@ -4461,7 +4530,7 @@ end)
     ToggleShip:OnChanged(function(Value)
         _G.Ship=Value
        end)
-       Options.ToggleShip:SetValue(false)
+       pcall(function() Options.ToggleShip:SetValue(false) end)
        function CheckPirateBoat()
         local checkmmpb = {"PirateGrandBrigade", "PirateBrigade"}
         for r, v in next, game:GetService("Workspace").Enemies:GetChildren() do
@@ -4497,7 +4566,7 @@ end)
     ToggleGhostShip:OnChanged(function(Value)
         _G.GhostShip=Value
        end)
-       Options.ToggleGhostShip:SetValue(false)
+       pcall(function() Options.ToggleGhostShip:SetValue(false) end)
        function CheckPirateBoat()
         local checkmmpb = {"FishBoat"}
         for r, v in next, game:GetService("Workspace").Enemies:GetChildren() do
@@ -4629,7 +4698,7 @@ spawn(function()
     ToggleElite:OnChanged(function(Value)
        _G.AutoElite=Value
        end)
-       Options.ToggleElite:SetValue(false)
+       pcall(function() Options.ToggleElite:SetValue(false) end)
        spawn(function()
            while task.wait() do
                if _G.AutoElite then
@@ -4766,7 +4835,7 @@ local ToggleTweenGear = Tabs.Sea:AddToggle("ToggleTweenGear", {Title="Teleport T
 ToggleTweenGear:OnChanged(function(Value)
     _G.TweenToGear=Value
 end) 
-Options.ToggleTweenGear:SetValue(false)
+pcall(function() Options.ToggleTweenGear:SetValue(false) end)
 spawn(function()
     pcall(function()
         while wait() do
@@ -4792,7 +4861,7 @@ local Togglelockmoon = Tabs.Sea:AddToggle("Togglelockmoon", {
 Togglelockmoon:OnChanged(function(Value)
     _G.AutoLockMoon=Value
 end)
-Options.Togglelockmoon:SetValue(false)
+pcall(function() Options.Togglelockmoon:SetValue(false) end)
 spawn(function()
     while wait() do
         pcall(function()
@@ -4824,7 +4893,7 @@ local ToggleAutoSaber = Tabs.Item:AddToggle("ToggleAutoSaber", {
 ToggleAutoSaber:OnChanged(function(Value)
     _G.Auto_Saber=Value
 end)
-Options.ToggleAutoSaber:SetValue(false)
+pcall(function() Options.ToggleAutoSaber:SetValue(false) end)
 spawn(function()
     while task.wait() do
         if _G.Auto_Saber and game.Players.LocalPlayer.Data.Level.Value>=200 then
@@ -4942,7 +5011,7 @@ local ToggleAutoPoleV1 = Tabs.Item:AddToggle("ToggleAutoPoleV1", {
 ToggleAutoPoleV1:OnChanged(function(Value)
     _G.Auto_PoleV1=Value
 end)
-Options.ToggleAutoPoleV1:SetValue(false)
+pcall(function() Options.ToggleAutoPoleV1:SetValue(false) end)
 local PolePos = CFrame.new(-7748.0185546875, 5606.80615234375,-2305.898681640625)
 spawn(function()
     while wait() do
@@ -4986,7 +5055,7 @@ local ToggleAutoSaw = Tabs.Item:AddToggle("ToggleAutoSaw", {
 ToggleAutoSaw:OnChanged(function(Value)
     _G.Auto_Saw=Value
 end)
-Options.ToggleAutoSaw:SetValue(false)
+pcall(function() Options.ToggleAutoSaw:SetValue(false) end)
 local PolePos = CFrame.new(-690.33081054688, 15.09425163269, 1582.2380371094)
 spawn(function()
     while wait() do
@@ -5030,7 +5099,7 @@ local ToggleAutoWarden = Tabs.Item:AddToggle("ToggleAutoWarden", {
 ToggleAutoWarden:OnChanged(function(Value)
     _G.Auto_Warden=Value
 end)
-Options.ToggleAutoWarden:SetValue(false)
+pcall(function() Options.ToggleAutoWarden:SetValue(false) end)
 local WardenPos = CFrame.new(5186.14697265625, 24.86684226989746, 832.1885375976562)
 spawn(function()
     while wait() do
@@ -5071,7 +5140,7 @@ if Sea3 then
     ToggleHallow:OnChanged(function(Value)
         AutoHallowSycthe=Value
     end)
-    Options.ToggleHallow:SetValue(false)
+    pcall(function() Options.ToggleHallow:SetValue(false) end)
     spawn(function()
         while wait() do
             if AutoHallowSycthe then
@@ -5121,7 +5190,7 @@ if Sea3 then
            ToggleYama:OnChanged(function(Value)
             _G.AutoYama=Value
            end)
-           Options.ToggleYama:SetValue(false)
+           pcall(function() Options.ToggleYama:SetValue(false) end)
            spawn(function()
             while wait() do
                 if _G.AutoYama then
@@ -5137,7 +5206,7 @@ if Sea3 then
         ToggleTushita:OnChanged(function(Value)
             AutoTushita=Value
         end)
-        Options.ToggleTushita:SetValue(false)
+        pcall(function() Options.ToggleTushita:SetValue(false) end)
            spawn(function()
                    while wait() do
                                if AutoTushita then
@@ -5171,7 +5240,7 @@ if Sea3 then
                    ToggleHoly:OnChanged(function(Value)
                     _G.Auto_Holy_Torch=Value
                    end)
-                   Options.ToggleHoly:SetValue(false)
+                   pcall(function() Options.ToggleHoly:SetValue(false) end)
                    spawn(function()
                     while wait() do
                         if _G.Auto_Holy_Torch then
@@ -5199,7 +5268,7 @@ local ToggleAutoCanvander = Tabs.Item:AddToggle("ToggleAutoCanvander", {
 ToggleAutoCanvander:OnChanged(function(Value)
     _G.Auto_Canvander=Value
 end)
-Options.ToggleAutoCanvander:SetValue(false)
+pcall(function() Options.ToggleAutoCanvander:SetValue(false) end)
 local PolePos = CFrame.new(5311.07421875, 426.0243835449219, 165.12762451171875)
 spawn(function()
     while wait() do
@@ -5243,7 +5312,7 @@ local ToggleAutoMusketeerHat = Tabs.Item:AddToggle("ToggleAutoMusketeerHat", {
 ToggleAutoMusketeerHat:OnChanged(function(Value)
     _G.Auto_MusketeerHat=Value
 end)
-Options.ToggleAutoMusketeerHat:SetValue(false)
+pcall(function() Options.ToggleAutoMusketeerHat:SetValue(false) end)
 spawn(function()
     pcall(function()
         while wait(0.1) do
@@ -5331,7 +5400,7 @@ local ToggleAutoObservationV2 = Tabs.Item:AddToggle("ToggleAutoObservationV2", {
 ToggleAutoObservationV2:OnChanged(function(Value)
     _G.Auto_ObservationV2=Value
 end)
-Options.ToggleAutoObservationV2:SetValue(false)
+pcall(function() Options.ToggleAutoObservationV2:SetValue(false) end)
 spawn(function()
     while wait() do
         pcall(function()
@@ -5384,7 +5453,7 @@ local ToggleAutoRainbowHaki = Tabs.Item:AddToggle("ToggleAutoRainbowHaki", {
 ToggleAutoRainbowHaki:OnChanged(function(Value)
     _G.Auto_RainbowHaki=Value
 end)
-Options.ToggleAutoRainbowHaki:SetValue(false)
+pcall(function() Options.ToggleAutoRainbowHaki:SetValue(false) end)
 spawn(function()
     pcall(function()
         while wait(0.1) do
@@ -5509,7 +5578,7 @@ local ToggleAutoSkullGuitar = Tabs.Item:AddToggle("ToggleAutoSkullGuitar", {
 ToggleAutoSkullGuitar:OnChanged(function(Value)
     _G.Auto_SkullGuitar=Value
 end)
-Options.ToggleAutoSkullGuitar:SetValue(false)
+pcall(function() Options.ToggleAutoSkullGuitar:SetValue(false) end)
 spawn(function()
         while wait() do
             pcall(function()
@@ -5630,7 +5699,7 @@ local ToggleAutoBuddy = Tabs.Item:AddToggle("ToggleAutoBuddy", {
 ToggleAutoBuddy:OnChanged(function(Value)
     _G.Auto_Buddy=Value
 end)
-Options.ToggleAutoBuddy:SetValue(false)
+pcall(function() Options.ToggleAutoBuddy:SetValue(false) end)
 local BuddyPos = CFrame.new(-731.2034301757812, 381.5658874511719,-11198.4951171875)
 spawn(function()
     while wait() do
@@ -5674,7 +5743,7 @@ local ToggleAutoDualKatana = Tabs.Item:AddToggle("ToggleAutoDualKatana", {
 ToggleAutoDualKatana:OnChanged(function(Value)
     _G.Auto_DualKatana=Value
 end)
-Options.ToggleAutoDualKatana:SetValue(false)
+pcall(function() Options.ToggleAutoDualKatana:SetValue(false) end)
 spawn(function()
         while wait() do
             pcall(function()
@@ -6095,7 +6164,7 @@ if Sea2 then
         ToggleFactory:OnChanged(function(Value)
             _G.Factory=Value
         end)
-        Options.ToggleFactory:SetValue(false)
+        pcall(function() Options.ToggleFactory:SetValue(false) end)
         spawn(function()
             while wait() do
                 if _G.Factory then
@@ -6137,7 +6206,7 @@ local ToggleAutoFarmSwan = Tabs.Main1:AddToggle("ToggleAutoFarmSwan", {
 ToggleAutoFarmSwan:OnChanged(function(Value)
     _G.Auto_FarmSwan=Value
 end)
-Options.ToggleAutoFarmSwan:SetValue(false)
+pcall(function() Options.ToggleAutoFarmSwan:SetValue(false) end)
 spawn(function()
     pcall(function()
         while wait() do
@@ -6176,7 +6245,7 @@ local ToggleAutoRengoku = Tabs.Item:AddToggle("ToggleAutoRengoku", {
 ToggleAutoRengoku:OnChanged(function(Value)
     _G.Auto_Regoku=Value
 end)    
-Options.ToggleAutoRengoku:SetValue(false)
+pcall(function() Options.ToggleAutoRengoku:SetValue(false) end)
 spawn(function()
     pcall(function()
         while wait() do
@@ -6215,7 +6284,7 @@ if Sea2 or Sea3 then
     ToggleHakiColor:OnChanged(function(Value)
         _G.Auto_Buy_Enchancement=Value
     end)
-        Options.ToggleHakiColor:SetValue(false)
+        pcall(function() Options.ToggleHakiColor:SetValue(false) end)
     spawn(function()
             while wait() do
                 if _G.Auto_Buy_Enchancement then
@@ -6233,7 +6302,7 @@ if Sea2 then
     ToggleSwordLengend:OnChanged(function(Value)
         _G.BuyLengendSword=Value
     end)
-        Options.ToggleSwordLengend:SetValue(false)
+        pcall(function() Options.ToggleSwordLengend:SetValue(false) end)
         spawn(function()
             while wait() do
                 pcall(function()
@@ -6255,7 +6324,7 @@ if Sea2 then
     ToggleEvoRace:OnChanged(function(Value)
         _G.AutoEvoRace=Value
     end)
-    Options.ToggleEvoRace:SetValue(false)
+    pcall(function() Options.ToggleEvoRace:SetValue(false) end)
     spawn(function()
         pcall(function()
             while wait(0.1) do
@@ -6310,7 +6379,7 @@ local ToggleAutoT = Tabs.Setting:AddToggle("ToggleAutoT", {Title="Auto On V3", D
 ToggleAutoT:OnChanged(function(Value)
     _G.AutoT=Value
     end)
- Options.ToggleAutoT:SetValue(false)
+ pcall(function() Options.ToggleAutoT:SetValue(false) end)
  spawn(function()
     while wait() do
         pcall(function()
@@ -6324,7 +6393,7 @@ local ToggleAutoY = Tabs.Setting:AddToggle("ToggleAutoY", {Title="Auto On V4", D
 ToggleAutoY:OnChanged(function(Value)
     _G.AutoY=Value
 end)
-Options.ToggleAutoY:SetValue(false)
+pcall(function() Options.ToggleAutoY:SetValue(false) end)
 spawn(function()
     while wait() do
         pcall(function()
@@ -6345,7 +6414,7 @@ ToggleAutoKen:OnChanged(function(Value)
         game:GetService("ReplicatedStorage").Remotes.CommE:FireServer("Ken", false) 
     end
 end)
-Options.ToggleAutoKen:SetValue(false)
+pcall(function() Options.ToggleAutoKen:SetValue(false) end)
 spawn(function()
     while wait() do
         pcall(function()
@@ -6365,7 +6434,7 @@ ToggleSaveSpawn:OnChanged(function(Value)
         game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer(unpack(args))
     end
 end)
-Options.ToggleSaveSpawn:SetValue(false)
+pcall(function() Options.ToggleSaveSpawn:SetValue(false) end)
 spawn(function()
     while wait() do
         pcall(function()
@@ -6425,7 +6494,7 @@ local ToggleBringMob = Tabs.Setting:AddToggle("ToggleBringMob", {Title="Bring Mo
 ToggleBringMob:OnChanged(function(Value)
     _G.BringMob = Value
 end)
-Options.ToggleBringMob:SetValue(true)
+pcall(function() Options.ToggleBringMob:SetValue(true) end)
 spawn(function()
     while wait() do
         pcall(function()
@@ -6470,7 +6539,7 @@ local ToggleRemoveNotify = Tabs.Setting:AddToggle("ToggleRemoveNotify", {Title="
 ToggleRemoveNotify:OnChanged(function(Value)
     RemoveNotify=Value
     end)
-    Options.ToggleRemoveNotify:SetValue(false)
+    pcall(function() Options.ToggleRemoveNotify:SetValue(false) end)
     spawn(function()
         while wait() do
             if RemoveNotify then
@@ -6489,33 +6558,33 @@ ToggleRemoveNotify:OnChanged(function(Value)
         game:GetService("RunService"):Set3dRenderingEnabled(true)
             end
         end)
-        Options.ToggleWhite:SetValue(false)
+        pcall(function() Options.ToggleWhite:SetValue(false) end)
         local SKill = Tabs.Setting:AddSection("Mastery Skill")
 local ToggleZ = Tabs.Setting:AddToggle("ToggleZ", {Title="Skill Z",Description="", Default=true })
 ToggleZ:OnChanged(function(Value)
     SkillZ=Value
 end)
-Options.ToggleZ:SetValue(true)
+pcall(function() Options.ToggleZ:SetValue(true) end)
 local ToggleX = Tabs.Setting:AddToggle("ToggleX", {Title="Skill X", Description="",Default=true })
 ToggleX:OnChanged(function(Value)
     SkillX=Value
 end)
-Options.ToggleX:SetValue(true)
+pcall(function() Options.ToggleX:SetValue(true) end)
 local ToggleC = Tabs.Setting:AddToggle("ToggleC", {Title="Skill C",Description="", Default=true })
 ToggleC:OnChanged(function(Value)
     SkillC=Value
 end)
-Options.ToggleC:SetValue(true)
+pcall(function() Options.ToggleC:SetValue(true) end)
 local ToggleV = Tabs.Setting:AddToggle("ToggleV", {Title="Skill V",Description="", Default=true })
 ToggleV:OnChanged(function(Value)
     SkillV=Value
 end)
-Options.ToggleV:SetValue(true)
+pcall(function() Options.ToggleV:SetValue(true) end)
 local ToggleF = Tabs.Setting:AddToggle("ToggleF", {Title="Skill F",Description="", Default=false })
 ToggleF:OnChanged(function(Value)
    SkillF=Value
     end)
-Options.ToggleF:SetValue(false)
+pcall(function() Options.ToggleF:SetValue(false) end)
 local Usser = Tabs.Info:AddParagraph({
     Title="Status",
     Content="====================\n"..
@@ -6614,7 +6683,7 @@ local Input = Tabs.Status:AddInput("Input", {
             setclipboard(tostring(game.JobId))
         end
     })
-    local Toggle = Tabs.Status:AddToggle("MyToggle", {Title="Spam Join Job ID", Default=false })
+    local Toggle = Tabs.Status:AddToggle("SpamJoinJobId", {Title="Spam Join Job ID", Default=false })
     Toggle:OnChanged(function(Value)
   _G.Join=Value
         end)
@@ -6629,27 +6698,27 @@ local ToggleMelee = Tabs.Stats:AddToggle("ToggleMelee", {Title="Add Melee",Descr
 ToggleMelee:OnChanged(function(Value)
     _G.Auto_Stats_Melee=Value
     end)
-Options.ToggleMelee:SetValue(false)
+pcall(function() Options.ToggleMelee:SetValue(false) end)
 local ToggleDe = Tabs.Stats:AddToggle("ToggleDe", {Title="Add Default",Description="", Default=false })
 ToggleDe:OnChanged(function(Value)
     _G.Auto_Stats_Defense=Value
     end)
-Options.ToggleDe:SetValue(false)
+pcall(function() Options.ToggleDe:SetValue(false) end)
 local ToggleSword = Tabs.Stats:AddToggle("ToggleSword", {Title="Add Sword",Description="", Default=false })
 ToggleSword:OnChanged(function(Value)
     _G.Auto_Stats_Sword=Value
     end)
-Options.ToggleSword:SetValue(false)
+pcall(function() Options.ToggleSword:SetValue(false) end)
 local ToggleGun = Tabs.Stats:AddToggle("ToggleGun", {Title="Add Gun", Description="",Default=false })
 ToggleGun:OnChanged(function(Value)
     _G.Auto_Stats_Gun=Value
     end)
-Options.ToggleGun:SetValue(false)
+pcall(function() Options.ToggleGun:SetValue(false) end)
 local ToggleFruit = Tabs.Stats:AddToggle("ToggleFruit", {Title="Add Fruit",Description="", Default=false })
 ToggleFruit:OnChanged(function(Value)
     _G.Auto_Stats_Devil_Fruit=Value
     end)
-Options.ToggleFruit:SetValue(false)
+pcall(function() Options.ToggleFruit:SetValue(false) end)
 spawn(function()
     while task.wait(0.25) do
         if _G.Auto_Stats_Devil_Fruit then
@@ -6745,7 +6814,7 @@ ToggleTeleport:OnChanged(function(Value)
         wait()
     end
 end)
-Options.ToggleTeleport:SetValue(false)
+pcall(function() Options.ToggleTeleport:SetValue(false) end)
 spawn(function()
     while wait() do
         if _G.TeleportPly then
@@ -6761,7 +6830,7 @@ local ToggleWalkonWater = Tabs.Player:AddToggle("ToggleWalkonWater", {Title="Wal
 ToggleWalkonWater:OnChanged(function(Value)
   _G.WalkonWater=Value
 end)
-Options.ToggleWalkonWater:SetValue(true)
+pcall(function() Options.ToggleWalkonWater:SetValue(true) end)
 spawn(function()
   while task.wait() do
     pcall(function()
@@ -6780,7 +6849,7 @@ ToggleSpeedRun:OnChanged(function(Value)
         game:GetService("Players").LocalPlayer.Character.HumanoidRootPart:FindFirstChild("Agility"):Destroy()
     end
 end)
-Options.ToggleSpeedRun:SetValue(true)
+pcall(function() Options.ToggleSpeedRun:SetValue(true) end)
 spawn(function()
     while wait() do
         if InfAbility then
@@ -6828,7 +6897,7 @@ local ToggleNoClip = Tabs.Player:AddToggle("ToggleNoClip", {Title = "No Clip",De
 ToggleNoClip:OnChanged(function(value)
     _G.LOf = value
 end)
-Options.ToggleNoClip:SetValue(true)
+pcall(function() Options.ToggleNoClip:SetValue(true) end)
 spawn(function()
     pcall(function()
         game:GetService("RunService").Stepped:Connect(function()
@@ -6846,7 +6915,7 @@ local ToggleEnablePvp = Tabs.Player:AddToggle("ToggleEnablePvp", {Title="Enable 
 ToggleEnablePvp:OnChanged(function(Value)
   _G.EnabledPvP=Value
 end)
-Options.ToggleEnablePvp:SetValue(false)
+pcall(function() Options.ToggleEnablePvp:SetValue(false) end)
 spawn(function()
   pcall(function()
       while wait() do
@@ -6867,13 +6936,13 @@ local ToggleAutoSea2 = Tabs.Main1:AddToggle("ToggleAutoSea2", {
 ToggleAutoSea2:OnChanged(function(Value)
     _G.Auto_Sea2=Value
 end)
-Options.ToggleAutoSea2:SetValue(false)
+pcall(function() Options.ToggleAutoSea2:SetValue(false) end)
 spawn(function()
     while wait() do 
         if _G.Auto_Sea2 then
             pcall(function()
                 local MyLevel = game:GetService("Players").LocalPlayer.Data.Level.Value
-                if MyLevel>=700 and World1 then
+                if MyLevel>=700 and Sea1 then
                     if game:GetService("Workspace").Map.Ice.Door.CanCollide==false and game:GetService("Workspace").Map.Ice.Door.Transparency==1 then
                         local CFrame1 = CFrame.new(4849.29883, 5.65138149, 719.611877)
                         repeat 
@@ -6936,7 +7005,7 @@ local ToggleAutoSea3 = Tabs.Main1:AddToggle("ToggleAutoSea3", {
 ToggleAutoSea3:OnChanged(function(Value)
     _G.Auto_Sea3=Value
 end)
-Options.ToggleAutoSea3:SetValue(false)
+pcall(function() Options.ToggleAutoSea3:SetValue(false) end)
 spawn(function()
     while wait() do
         if _G.Auto_Sea3 then
@@ -7299,7 +7368,7 @@ ToggleBuyFruit:OnChanged(function(Value)
         _G.AutoBuyFruitSniper=false
     end
 end)
-Options.ToggleBuyFruit:SetValue(false)
+pcall(function() Options.ToggleBuyFruit:SetValue(false) end)
 local DropdownPermanentFruit = Tabs.Fruit:AddDropdown("DropdownPermanentFruit", {
     Title="Buy Permanent Fruit",
     Description="",
@@ -7329,12 +7398,12 @@ TogglePermanentFruit:OnChanged(function(Value)
         _G.AutoSwitchPermanentFruit=false
     end
 end)
-Options.TogglePermanentFruit:SetValue(false)
+pcall(function() Options.TogglePermanentFruit:SetValue(false) end)
 local ToggleStore = Tabs.Fruit:AddToggle("ToggleStore", {Title="Store Fruit",Description="", Default=false })
 ToggleStore:OnChanged(function(Value)
     _G.AutoStoreFruit=Value
 end)
-Options.ToggleStore:SetValue(false)
+pcall(function() Options.ToggleStore:SetValue(false) end)
 spawn(function()
     while task.wait() do
         if _G.AutoStoreFruit then
@@ -7452,7 +7521,7 @@ local ToggleRandomFruit = Tabs.Fruit:AddToggle("ToggleRandomFruit", {Title="Rand
 ToggleRandomFruit:OnChanged(function(Value)
     _G.Random_Auto=Value
 end)
-Options.ToggleRandomFruit:SetValue(false)
+pcall(function() Options.ToggleRandomFruit:SetValue(false) end)
 spawn(function()
     pcall(function()
         while wait() do
@@ -7466,7 +7535,7 @@ local ToggleCollectTP = Tabs.Fruit:AddToggle("ToggleCollectTP", {Title="Teleport
 ToggleCollectTP:OnChanged(function(Value)
     _G.CollectFruitTP=Value
 end)
-Options.ToggleCollectTP:SetValue(false)
+pcall(function() Options.ToggleCollectTP:SetValue(false) end)
 spawn(function()
         while wait() do
             if _G.CollectFruitTP then
@@ -7482,7 +7551,7 @@ local ToggleCollect = Tabs.Fruit:AddToggle("ToggleCollect", {Title="Collect Frui
 ToggleCollect:OnChanged(function(Value)
     _G.Tweenfruit=Value
 end)
-Options.ToggleCollect:SetValue(false)
+pcall(function() Options.ToggleCollect:SetValue(false) end)
 spawn(function()
     while wait() do
         if _G.Tweenfruit then
@@ -7500,7 +7569,7 @@ ToggleEspPlayer:OnChanged(function(Value)
     ESPPlayer=Value
     UpdatePlayerChams()
 end)
-Options.ToggleEspPlayer:SetValue(false)
+pcall(function() Options.ToggleEspPlayer:SetValue(false) end)
 local ToggleEspFruit = Tabs.Fruit:AddToggle("ToggleEspFruit", {Title="Fruit",Description="", Default=false })
 ToggleEspFruit:OnChanged(function(Value)
     DevilFruitESP=Value
@@ -7508,7 +7577,7 @@ ToggleEspFruit:OnChanged(function(Value)
         UpdateDevilChams() 
     end
 end)
-Options.ToggleEspFruit:SetValue(false)
+pcall(function() Options.ToggleEspFruit:SetValue(false) end)
 local ToggleEspIsland = Tabs.Fruit:AddToggle("ToggleEspIsland", {Title="Island",Description="", Default=false })
 ToggleEspIsland:OnChanged(function(Value)
     IslandESP=Value
@@ -7516,13 +7585,13 @@ ToggleEspIsland:OnChanged(function(Value)
         UpdateIslandESP() 
     end
 end)
-Options.ToggleEspIsland:SetValue(false)
+pcall(function() Options.ToggleEspIsland:SetValue(false) end)
 local ToggleEspFlower = Tabs.Fruit:AddToggle("ToggleEspFlower", {Title="Flower",Description="", Default=false })
 ToggleEspFlower:OnChanged(function(Value)
     FlowerESP=Value
     UpdateFlowerChams() 
 end)
-Options.ToggleEspFlower:SetValue(false)
+pcall(function() Options.ToggleEspFlower:SetValue(false) end)
 spawn(function()
     while wait() do
         if FlowerESP then
@@ -7550,7 +7619,7 @@ ToggleEspRealFruit:OnChanged(function(Value)
         UpdateRealFruitEsp() 
     end
 end)
-Options.ToggleEspRealFruit:SetValue(false)
+pcall(function() Options.ToggleEspRealFruit:SetValue(false) end)
 function UpdateRealFruitEsp() 
     for _, v in pairs(game.Workspace.AppleSpawner:GetChildren()) do
         if v:IsA("Tool") then
@@ -7651,7 +7720,7 @@ ToggleIslandMirageEsp:OnChanged(function(Value)
         UpdateIslandMirageEsp() 
     end
 end)
-Options.ToggleIslandMirageEsp:SetValue(false)
+pcall(function() Options.ToggleIslandMirageEsp:SetValue(false) end)
 function isnil(thing)
     return (thing==nil)
 end
@@ -7708,7 +7777,7 @@ local ToggleBuy = Tabs.Raid:AddToggle("ToggleBuy", {Title="Buy Chip", Descriptio
 ToggleBuy:OnChanged(function(Value)
     _G.Auto_Buy_Chips_Dungeon=Value
 end)
-Options.ToggleBuy:SetValue(false)
+pcall(function() Options.ToggleBuy:SetValue(false) end)
 spawn(function()
     while wait() do
         if _G.Auto_Buy_Chips_Dungeon then
@@ -7727,7 +7796,7 @@ end)
     ToggleStart:OnChanged(function(Value)
         _G.Auto_StartRaid=Value
 end)
-Options.ToggleStart:SetValue(false)
+pcall(function() Options.ToggleStart:SetValue(false) end)
 spawn(function()
     while wait() do
         pcall(function()
@@ -7769,7 +7838,7 @@ ToggleNextIsland:OnChanged(function(Value)
         _G.AutoNear=false
     end
 end)
-Options.ToggleNextIsland:SetValue(false)
+pcall(function() Options.ToggleNextIsland:SetValue(false) end)
 spawn(function()
     local visitedIslands = {}
     while task.wait() do
@@ -7820,7 +7889,7 @@ local ToggleAwake = Tabs.Raid:AddToggle("ToggleAwake", {Title="Thá»©c Tá»�
 ToggleAwake:OnChanged(function(Value)
     AutoAwakenAbilities=Value
 end)
-Options.ToggleAwake:SetValue(false)
+pcall(function() Options.ToggleAwake:SetValue(false) end)
 spawn(function()
     while task.wait() do
         if AutoAwakenAbilities then
@@ -7950,7 +8019,7 @@ local ToggleLaw = Tabs.Raid:AddToggle("ToggleLaw", {Title="Auto Raid Law",Descri
 ToggleLaw:OnChanged(function(Value)
     Auto_Law=Value
 end)
-Options.ToggleLaw:SetValue(false)
+pcall(function() Options.ToggleLaw:SetValue(false) end)
 spawn(function()
     pcall(function()
         while wait() do
@@ -8044,12 +8113,12 @@ local ToggleHumanandghoul = Tabs.Race:AddToggle("ToggleHumanandghoul", {Title="A
 ToggleHumanandghoul:OnChanged(function(Value)
     KillAura=Value
 end)
-Options.ToggleHumanandghoul:SetValue(false)
+pcall(function() Options.ToggleHumanandghoul:SetValue(false) end)
 local ToggleAutotrial = Tabs.Race:AddToggle("ToggleAutotrial", {Title="Auto Trial",Description="", Default=false })
 ToggleAutotrial:OnChanged(function(Value)
     _G.AutoQuestRace=Value
 end)
-Options.ToggleAutotrial:SetValue(false)
+pcall(function() Options.ToggleAutotrial:SetValue(false) end)
 spawn(function()
     pcall(function()
         while wait() do
@@ -8169,7 +8238,7 @@ local ToggleKillTrial = Tabs.Race:AddToggle("ToggleKillTrial", {Title="Kill Play
 ToggleKillTrial:OnChanged(function(Value)
     _G.AutoKillTrial=Value
 end)
-Options.ToggleKillTrial:SetValue(false)
+pcall(function() Options.ToggleKillTrial:SetValue(false) end)
 spawn(function()
     while wait() do
         pcall(function()
@@ -8200,7 +8269,7 @@ local AutoFarmRace = false
 ToggleFarmRace:OnChanged(function(Value)
     AutoFarmRace=Value
 end)
-Options.ToggleFarmRace:SetValue(false)
+pcall(function() Options.ToggleFarmRace:SetValue(false) end)
 spawn(function()
     while wait() do
         if AutoFarmRace then 
@@ -8229,7 +8298,7 @@ ToggleUpgrade:OnChanged(function(Value)
         game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer('UpgradeRace', 'Buy')
     end
 end)
-Options.ToggleUpgrade:SetValue(false)
+pcall(function() Options.ToggleUpgrade:SetValue(false) end)
 local Mastery = Tabs.Shop:AddSection("Ability")
 Tabs.Shop:AddButton({
     Title="Geppo",
@@ -8672,7 +8741,7 @@ local ToggleRejoin = Tabs.Misc:AddToggle("ToggleRejoin", {Title="Rejoin Server",
 ToggleRejoin:OnChanged(function(Value)
     _G.AutoRejoin=Value
 end)
-Options.ToggleRejoin:SetValue(true)
+pcall(function() Options.ToggleRejoin:SetValue(true) end)
 -- (Hoan thien: chi ket noi 1 lan duy nhat, ban cu tao connection moi moi frame gay lag khi treo lau)
 if getgenv().rejoin then pcall(function() getgenv().rejoin:Disconnect() end) end
 getgenv().rejoin=game:GetService("CoreGui").RobloxPromptGui.promptOverlay.ChildAdded:Connect(function(child)
@@ -9105,7 +9174,7 @@ local ToggleTPVolcano = Tabs.Sea:AddToggle("ToggleTPVolcano", {
 ToggleTPVolcano:OnChanged(function(Value)
     _G.TweenToPrehistoric=Value
 end)
-Options.ToggleTPVolcano:SetValue(false)
+pcall(function() Options.ToggleTPVolcano:SetValue(false) end)
 spawn(function()
     local island
     while not island do
@@ -9256,7 +9325,7 @@ local ToggleKillAura = Tabs.Sea:AddToggle("ToggleKillAura", {Title="Auto Kill Go
 ToggleKillAura:OnChanged(function(Value)
     KillAura=Value
 end)
-Options.ToggleKillAura:SetValue(false)
+pcall(function() Options.ToggleKillAura:SetValue(false) end)
 spawn(function()
     while wait() do
         if KillAura then
@@ -9346,7 +9415,7 @@ local ToggleAntiStaff = Tabs.Misc:AddToggle("ToggleAntiStaff", {Title="Tu doi se
 ToggleAntiStaff:OnChanged(function(Value)
     _G.AntiStaffHop=Value
 end)
-Options.ToggleAntiStaff:SetValue(true)
+pcall(function() Options.ToggleAntiStaff:SetValue(true) end)
 if _G.AntiStaffHop == nil then _G.AntiStaffHop = true end
 spawn(function()
     while true do

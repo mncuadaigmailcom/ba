@@ -1,1 +1,49 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ten Hub - Blox Fruits</title>
+<style>
+body{font-family:system-ui;background:#0f0f0f;color:#eee;padding:24px;max-width:800px;margin:auto}
+code{background:#222;padding:2px 6px;border-radius:4px}
+pre{background:#1a1a1a;padding:16px;border-radius:8px;overflow:auto}
+a{color:#7dd3fc}
+.card{background:#1a1a1a;padding:16px;border-radius:12px;margin:12px 0}
+</style>
+</head>
+<body>
+<h1>Ten Hub - Blox Fruits (Fix UI)</h1>
+<p>Repo CDN cho script Roblox. Nếu bạn bật script lên chỉ thấy menu trắng không thấy nút, hãy dùng bản đã fix.</p>
 
+<div class="card">
+<h3>🚀 Cách dùng (Executor)</h3>
+<pre><code>loadstring(game:HttpGet("https://raw.githubusercontent.com/mncuadaigmailcom/ba/main/script.js"))()</code></pre>
+<p>Nếu dùng branch fix này:</p>
+<pre><code>loadstring(game:HttpGet("https://raw.githubusercontent.com/mncuadaigmailcom/ba/arena/01a0839c-ba/script.js"))()</code></pre>
+</div>
+
+<div class="card">
+<h3>🧪 Test UI tối thiểu</h3>
+<p>Nếu nghi executor không hỗ trợ Fluent:</p>
+<pre><code>loadstring(game:HttpGet("https://raw.githubusercontent.com/mncuadaigmailcom/ba/arena/01a0839c-ba/test_ui.lua"))()</code></pre>
+</div>
+
+<div class="card">
+<h3>🛠️ Đã fix gì?</h3>
+<ul>
+<li>Tăng Size Window 555x320 -> 580x460</li>
+<li>Thêm Window:SelectTab(1) bắt buộc</li>
+<li>Thêm fallback CDN cho Fluent + SaveManager</li>
+<li>Wrap Options:SetValue trong pcall</li>
+<li>Sửa Idled:connect -> Connect</li>
+<li>Sửa World1 -> Sea1</li>
+<li>Đổi MyToggle -> SpamJoinJobId</li>
+<li>Xóa hàm to() trùng</li>
+</ul>
+<p>Chi tiết xem <a href="FIX_NOTES.md">FIX_NOTES.md</a></p>
+</div>
+
+<p>Discord: discord.gg/tenhub</p>
+</body>
+</html>
